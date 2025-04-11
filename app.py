@@ -1,17 +1,17 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 from flask_sqlalchemy import SQLAlchemy
 import os
-from flask import Response
 import csv
 import io
 
 app = Flask(__name__)
 
-# Get database URL from environment variable (set by Render)
+# Database configuration
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///notes.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Initialize the database
 db = SQLAlchemy(app)
 
 # Define the Note model
@@ -19,10 +19,12 @@ class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
 
+# Home page: serves the frontend
 @app.route('/')
 def home():
     return render_template('index.html')
 
+# API: Get or add notes
 @app.route('/notes', methods=['GET', 'POST'])
 def handle_notes():
     if request.method == 'POST':
@@ -35,23 +37,14 @@ def handle_notes():
     all_notes = Note.query.all()
     return jsonify([{"text": n.text} for n in all_notes])
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=port)
-
-@app.route('/debug/show-notes')
-def show_notes():
-    all_notes = Note.query.all()
-    return '<br>'.join(f"- {note.text}" for note in all_notes)
-
+# Export notes as JSON
 @app.route('/export/json')
 def export_json():
     all_notes = Note.query.all()
     notes_list = [{"text": n.text} for n in all_notes]
     return jsonify(notes_list)
 
+# Export notes as CSV
 @app.route('/export/csv')
 def export_csv():
     all_notes = Note.query.all()
@@ -70,3 +63,9 @@ def export_csv():
         headers={"Content-Disposition": "attachment;filename=notes.csv"}
     )
 
+# Create DB tables and run app
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True, host='0.0.0.0', port=port)
