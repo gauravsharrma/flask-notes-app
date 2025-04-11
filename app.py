@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 import os
+from flask import Response
+import csv
+import io
 
 app = Flask(__name__)
 
@@ -42,3 +45,28 @@ if __name__ == '__main__':
 def show_notes():
     all_notes = Note.query.all()
     return '<br>'.join(f"- {note.text}" for note in all_notes)
+
+@app.route('/export/json')
+def export_json():
+    all_notes = Note.query.all()
+    notes_list = [{"text": n.text} for n in all_notes]
+    return jsonify(notes_list)
+
+@app.route('/export/csv')
+def export_csv():
+    all_notes = Note.query.all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['text'])
+
+    for note in all_notes:
+        writer.writerow([note.text])
+
+    output.seek(0)
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=notes.csv"}
+    )
+
