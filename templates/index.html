@@ -35,7 +35,9 @@
         <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
       </div>
       <div id="markdownOutput" class="prose dark:prose-invert max-w-none bg-gray-800 p-4 rounded wrap-text mx-auto" style="max-width: 70ch;"></div>
-      
+      <div class="flex justify-between mt-2">
+        <button id="prevSlideBtn" onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
+        <div class="text-sm">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></div>
         <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
       </div>
     </div>
@@ -47,21 +49,6 @@
       <button onclick="addNote()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded mb-4">Add Note</button>
 
       <input type="text" id="searchInput" placeholder="Search notes..." class="w-full p-2 text-black rounded mb-2" oninput="searchNotes()">
-
-      <div class="flex justify-between items-center mb-2" style="position: relative; z-index: 1;">
-        <label class="text-sm">Per Page:
-          <select id="notesPerPage" onchange="updateNotesPerPage()" class="ml-2 text-black rounded">
-            <option value="2">2</option>
-            <option value="4">4</option>
-            <option value="6">6</option>
-          </select>
-        </label>
-        <div class="space-x-2">
-          <button id="prevNotesBtn" onclick="prevNotesPage()" class="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded">⬅</button>
-          <div class="text-sm inline-block">Page <span id="notesPage">1</span></div>
-          <button id="nextNotesBtn" onclick="nextNotesPage()" class="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded">➡</button>
-        </div>
-      </div>
 
       <div id="notesContainer" class="space-y-2"></div>
 
