@@ -1,63 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tailwind Notes App 123</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Notes App</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .post-it {
+      background: #fffb88;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transform: rotate(-1deg);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-xl bg-white shadow-xl rounded-2xl p-6">
-    <h2 class="text-2xl font-semibold text-center mb-6">📝 My Notes</h2>
+<body class="bg-gray-900 text-gray-200 min-h-screen p-4">
+  <div class="grid grid-cols-12 gap-4">
 
-    <textarea
-      id="note"
-      placeholder="Type your note here..."
-      class="w-full h-28 p-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-    ></textarea>
-
-    <button
-      onclick="saveNote()"
-      class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition duration-200"
-    >
-      Save Note
-    </button>
-
-    <!-- Export buttons -->
-    <div class="mt-4 flex justify-between gap-4">
-      <a href="/export/json" class="flex-1 text-center bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-medium">Export JSON</a>
-      <a href="/export/csv" class="flex-1 text-center bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg font-medium">Export CSV</a>
+    <!-- Column 1: Markdown Input -->
+    <div class="col-span-1">
+      <h2 class="text-lg font-semibold mb-2">Markdown Input</h2>
+      <textarea id="markdownInput" class="w-full h-64 p-2 text-black rounded"></textarea>
+      <button onclick="convertMarkdown()" class="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Convert</button>
     </div>
 
-    <!-- Notes list -->
-    <ul id="notesList" class="mt-6 space-y-3"></ul>
+    <!-- Column 2: HTML Output -->
+    <div class="col-span-7">
+      <h2 class="text-lg font-semibold mb-2">Converted HTML</h2>
+      <div id="markdownOutput" class="prose dark:prose-invert max-w-none bg-gray-800 p-4 rounded overflow-auto h-96"></div>
+      <div class="flex justify-between mt-2">
+        <button onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
+        <button onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
+      </div>
+    </div>
+
+    <!-- Column 3: Notes Section -->
+    <div class="col-span-4">
+      <h2 class="text-lg font-semibold mb-2">Add Note</h2>
+      <textarea id="noteInput" class="w-full h-24 p-2 text-black rounded mb-2"></textarea>
+      <button onclick="addNote()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded mb-4">Add Note</button>
+
+      <input type="text" id="searchInput" placeholder="Search notes..." class="w-full p-2 text-black rounded mb-2" oninput="searchNotes()">
+
+      <div id="notesContainer" class="space-y-2"></div>
+
+      <div class="flex justify-between items-center mt-4">
+        <label class="text-sm">Per Page:
+          <select id="notesPerPage" onchange="updateNotesPerPage()" class="ml-2 text-black rounded">
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="6">6</option>
+          </select>
+        </label>
+        <div class="space-x-2">
+          <button onclick="prevNotesPage()" class="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded">⬅</button>
+          <button onclick="nextNotesPage()" class="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded">➡</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    async function saveNote() {
-      const noteText = document.getElementById('note').value.trim();
+    let currentSlide = 0;
+    let slides = [];
+
+    function convertMarkdown() {
+      const raw = document.getElementById('markdownInput').value;
+      slides = raw.split('---');
+      currentSlide = 0;
+      renderSlide();
+    }
+
+    function renderSlide() {
+      const slide = slides[currentSlide] || '';
+      document.getElementById('markdownOutput').innerHTML = marked.parse(slide);
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        renderSlide();
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        renderSlide();
+      }
+    }
+
+    let currentPage = 0;
+    let perPage = 2;
+    let currentSearch = '';
+
+    function updateNotesPerPage() {
+      perPage = parseInt(document.getElementById('notesPerPage').value);
+      currentPage = 0;
+      fetchNotes();
+    }
+
+    function addNote() {
+      const noteText = document.getElementById('noteInput').value.trim();
       if (!noteText) return;
-      await fetch("/notes", {
-        method: "POST",
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({text: noteText})
+      fetch('/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: noteText })
+      }).then(() => {
+        document.getElementById('noteInput').value = '';
+        fetchNotes();
       });
-      document.getElementById('note').value = '';
-      loadNotes();
     }
 
-    async function loadNotes() {
-      const res = await fetch("/notes");
-      const notes = await res.json();
-      const list = document.getElementById('notesList');
-      list.innerHTML = notes.map(n => `
-        <li class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
-          ${n.text}
-        </li>
-      `).join('');
+    function fetchNotes() {
+      fetch(`/notes?search=${currentSearch}&page=${currentPage}&per_page=${perPage}`)
+        .then(res => res.json())
+        .then(data => renderNotes(data.notes));
     }
 
-    loadNotes();
+    function renderNotes(notes) {
+      const container = document.getElementById('notesContainer');
+      container.innerHTML = '';
+      notes.forEach(note => {
+        const noteEl = document.createElement('div');
+        noteEl.className = 'p-3 rounded post-it';
+        noteEl.innerHTML = `
+          <div class="text-sm text-black">${note.text}</div>
+          <div class="mt-2 flex space-x-2">
+            <button onclick="editNote(${note.id}, \"${note.text.replace(/"/g, '&quot;')}\")" class="text-xs bg-blue-400 px-2 py-1 rounded">Edit</button>
+            <button onclick="deleteNote(${note.id})" class="text-xs bg-red-400 px-2 py-1 rounded">Delete</button>
+          </div>
+        `;
+        container.appendChild(noteEl);
+      });
+    }
+
+    function editNote(id, oldText) {
+      const newText = prompt('Edit note:', oldText);
+      if (newText !== null) {
+        fetch(`/notes/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: newText })
+        }).then(fetchNotes);
+      }
+    }
+
+    function deleteNote(id) {
+      if (confirm('Delete this note?')) {
+        fetch(`/notes/${id}`, { method: 'DELETE' }).then(fetchNotes);
+      }
+    }
+
+    function prevNotesPage() {
+      if (currentPage > 0) {
+        currentPage--;
+        fetchNotes();
+      }
+    }
+
+    function nextNotesPage() {
+      currentPage++;
+      fetchNotes();
+    }
+
+    function searchNotes() {
+      currentSearch = document.getElementById('searchInput').value.toLowerCase();
+      currentPage = 0;
+      fetchNotes();
+    }
+
+    fetchNotes();
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>
