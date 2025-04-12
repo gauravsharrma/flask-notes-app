@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markdown Notes App777</title>
+  <title>Markdown Notes App888</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .post-it {
@@ -29,6 +29,11 @@
     <!-- Column 2: HTML Output -->
     <div class="col-span-7">
       <h2 class="text-lg font-semibold mb-2">Converted HTML</h2>
+      <div class="flex justify-between mb-2">
+        <button id="prevSlideBtn" onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
+        <div class="text-sm">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></div>
+        <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
+      </div>
       <div id="markdownOutput" class="prose dark:prose-invert max-w-none bg-gray-800 p-4 rounded wrap-text mx-auto" style="max-width: 70ch;"></div>
       <div class="flex justify-between mt-2">
         <button id="prevSlideBtn" onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
@@ -47,7 +52,7 @@
 
       <div id="notesContainer" class="space-y-2"></div>
 
-      <div class="flex justify-between items-center mt-4">
+      <div class="flex justify-between items-center mb-2" style="position: relative; z-index: 1;">
         <label class="text-sm">Per Page:
           <select id="notesPerPage" onchange="updateNotesPerPage()" class="ml-2 text-black rounded">
             <option value="2">2</option>
