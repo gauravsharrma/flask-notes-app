@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markdown Notes App555</title>
+  <title>Markdown Notes App</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .post-it {
@@ -138,14 +138,23 @@
         const noteEl = document.createElement('div');
         noteEl.className = 'p-3 rounded post-it';
         noteEl.innerHTML = `
-          <div class="text-sm text-black">${note.text}</div>
+          <div class="text-sm text-black wrap-text">${note.text}</div>
           <div class="mt-2 flex space-x-2">
-            <button onclick="editNote(${note.id}, \"${note.text.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}\")" class="text-xs bg-blue-400 px-2 py-1 rounded">Edit</button>
+            <button class="text-xs bg-blue-400 px-2 py-1 rounded edit-btn" data-id="${note.id}" data-text="${encodeURIComponent(note.text)}">Edit</button>
             <button onclick="deleteNote(${note.id})" class="text-xs bg-red-400 px-2 py-1 rounded">Delete</button>
           </div>
         `;
         container.appendChild(noteEl);
       });
+
+      document.querySelectorAll('.edit-btn').forEach(button => {
+        button.onclick = () => {
+          const id = button.getAttribute('data-id');
+          const oldText = decodeURIComponent(button.getAttribute('data-text'));
+          editNote(id, oldText);
+        };
+      });
+
       document.getElementById('notesPage').innerText = currentPage + 1;
       document.getElementById('prevNotesBtn').disabled = currentPage === 0;
       const lastPage = Math.ceil(totalNotes / perPage) - 1;
