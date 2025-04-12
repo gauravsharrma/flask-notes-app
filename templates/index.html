@@ -43,12 +43,14 @@
     </div>
 
     <!-- Column 3: Notes Section -->
-    <div class="col-span-4">
+    <div class="col-span-12 lg:col-span-4">
       <h2 class="text-lg font-semibold mb-2">Add Note</h2>
       <textarea id="noteInput" class="w-full h-24 p-2 text-black rounded mb-2"></textarea>
       <button onclick="addNote()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded mb-4">Add Note</button>
 
       <input type="text" id="searchInput" placeholder="Search notes..." class="w-full p-2 text-black rounded mb-2" oninput="searchNotes()">
+
+      <a href="/export/excel" class="inline-block mb-2 bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded font-semibold text-sm">📥 Export to Excel</a>
 
       <div id="notesContainer" class="space-y-2"></div>
 
