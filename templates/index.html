@@ -39,7 +39,7 @@
 
     <!-- Notes Section -->
     <div class="col-span-12 lg:col-span-4">
-      <h2 class="text-lg font-semibold mb-2">Add Note</h2>
+      <h2 class="text-lg font-semibold mb-2">Add Note or Paste Image</h2>
       <select id="categoryInput" class="w-full p-2 text-black rounded mb-2">
         <option value="Note">Note</option>
         <option value="Todo">Todo</option>
@@ -49,7 +49,7 @@
       </select>
       <input id="tagsInput" class="w-full p-2 text-black rounded mb-2" placeholder="Tags (comma-separated)" list="tagSuggestions">
       <datalist id="tagSuggestions"></datalist>
-      <textarea id="noteInput" class="w-full h-24 p-2 text-black rounded mb-2" placeholder="Write your note..."></textarea>
+      <textarea id="noteInput" class="w-full h-24 p-2 text-black rounded mb-2" placeholder="Write your note or paste image..."></textarea>
       <button onclick="addNote()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded mb-4">Add Note</button>
 
       <input type="text" id="searchInput" placeholder="Search notes..." class="w-full p-2 text-black rounded mb-2" oninput="searchNotes()">
@@ -77,167 +77,22 @@
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
-    let currentSlide = 0;
-    let slides = [];
-    let currentPage = 0;
-    let perPage = 2;
-    let currentSearch = '';
-    let totalNotes = 0;
-
-    function convertMarkdown() {
-      const raw = document.getElementById('markdownInput').value;
-      slides = raw
-        .split('---')
-        .map(s => s.trim())
-        .filter(s => s && !/^[\-\s]*$/.test(s));
-
-      currentSlide = 0;
-      renderSlide();
-    }
-
-    function renderSlide() {
-      const slide = slides[currentSlide] || '';
-      document.getElementById('markdownOutput').innerHTML = marked.parse(slide);
-      document.getElementById('slideNum').innerText = currentSlide + 1;
-      document.getElementById('slideTotal').innerText = slides.length;
-      document.getElementById('prevSlideBtn').disabled = currentSlide === 0;
-      document.getElementById('nextSlideBtn').disabled = currentSlide === slides.length - 1;
-    }
-
-    function prevSlide() {
-      if (currentSlide > 0) {
-        currentSlide--;
-        renderSlide();
+    // Handle image paste
+    document.getElementById('noteInput').addEventListener('paste', function (event) {
+      const items = event.clipboardData.items;
+      for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          const file = item.getAsFile();
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const base64Image = event.target.result;
+            const noteInput = document.getElementById('noteInput');
+            noteInput.value += `\n![pasted image](${base64Image})`;
+          };
+          reader.readAsDataURL(file);
+        }
       }
-    }
-
-    function nextSlide() {
-      if (currentSlide < slides.length - 1) {
-        currentSlide++;
-        renderSlide();
-      }
-    }
-
-    function fetchTags() {
-      fetch('/tags')
-        .then(res => {
-          if (!res.ok) throw new Error('Server error while fetching tags');
-          return res.json();
-        })
-        .then(tags => {
-          const list = document.getElementById('tagSuggestions');
-          list.innerHTML = tags.map(tag => `<option value="${tag}">`).join('');
-        })
-        .catch(err => console.error('Fetch tags failed:', err));
-    }
-
-    function fetchNotes() {
-      fetch(`/notes?search=${currentSearch}&page=${currentPage}&per_page=${perPage}`)
-        .then(res => {
-          if (!res.ok) throw new Error('Server error while fetching notes');
-          return res.json();
-        })
-        .then(data => {
-          totalNotes = data.total;
-          renderNotes(data.notes);
-        })
-        .catch(err => console.error('Fetch notes failed:', err));
-    }
-
-    function renderNotes(notes) {
-      const container = document.getElementById('notesContainer');
-      container.innerHTML = '';
-      notes.forEach(note => {
-        const noteEl = document.createElement('div');
-        noteEl.className = 'p-3 rounded post-it';
-        noteEl.innerHTML = `
-          <div class="text-sm text-black wrap-text">${note.text}</div>
-          <div class="text-xs text-black italic">Category: ${note.category || 'Note'}</div>
-          <div class="text-xs text-black italic mb-2">Tags: ${note.tags || ''}</div>
-          <div class="mt-2 flex space-x-2">
-            <button class="text-xs bg-blue-400 px-2 py-1 rounded edit-btn" data-id="${note.id}" data-text="${encodeURIComponent(note.text)}">Edit</button>
-            <button onclick="deleteNote(${note.id})" class="text-xs bg-red-400 px-2 py-1 rounded">Delete</button>
-          </div>
-        `;
-        container.appendChild(noteEl);
-      });
-
-      document.querySelectorAll('.edit-btn').forEach(button => {
-        button.onclick = () => {
-          const id = button.getAttribute('data-id');
-          const oldText = decodeURIComponent(button.getAttribute('data-text'));
-          editNote(id, oldText);
-        };
-      });
-
-      document.getElementById('notesPage').innerText = currentPage + 1;
-      document.getElementById('prevNotesBtn').disabled = currentPage === 0;
-      const lastPage = Math.ceil(totalNotes / perPage) - 1;
-      document.getElementById('nextNotesBtn').disabled = currentPage >= lastPage;
-    }
-
-    function addNote() {
-      const noteText = document.getElementById('noteInput').value.trim();
-      const category = document.getElementById('categoryInput').value;
-      const tags = document.getElementById('tagsInput').value.trim();
-      if (!noteText) return;
-      fetch('/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: noteText, category, tags })
-      }).then(() => {
-        document.getElementById('noteInput').value = '';
-        document.getElementById('tagsInput').value = '';
-        fetchNotes();
-      });
-    }
-
-    function editNote(id, oldText) {
-      const newText = prompt('Edit note:', oldText);
-      if (newText !== null) {
-        fetch(`/notes/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: newText })
-        }).then(fetchNotes);
-      }
-    }
-
-    function deleteNote(id) {
-      if (confirm('Delete this note?')) {
-        fetch(`/notes/${id}`, { method: 'DELETE' }).then(fetchNotes);
-      }
-    }
-
-    function updateNotesPerPage() {
-      perPage = parseInt(document.getElementById('notesPerPage').value);
-      currentPage = 0;
-      fetchNotes();
-    }
-
-    function prevNotesPage() {
-      if (currentPage > 0) {
-        currentPage--;
-        fetchNotes();
-      }
-    }
-
-    function nextNotesPage() {
-      const lastPage = Math.ceil(totalNotes / perPage) - 1;
-      if (currentPage < lastPage) {
-        currentPage++;
-        fetchNotes();
-      }
-    }
-
-    function searchNotes() {
-      currentSearch = document.getElementById('searchInput').value.toLowerCase();
-      currentPage = 0;
-      fetchNotes();
-    }
-
-    fetchTags();
-    fetchNotes();
+    });
   </script>
 </body>
 </html>
