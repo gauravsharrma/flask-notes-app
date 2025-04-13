@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
@@ -35,24 +35,27 @@
         <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
       </div>
       <div id="markdownOutput" class="prose dark:prose-invert max-w-none bg-gray-800 p-4 rounded wrap-text mx-auto" style="max-width: 70ch;"></div>
-      <div class="flex justify-between mt-2">
-        <button id="prevSlideBtn" onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
-        <div class="text-sm">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></div>
-        <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
-      </div>
     </div>
 
     <!-- Column 3: Notes Section -->
     <div class="col-span-12 lg:col-span-4">
       <h2 class="text-lg font-semibold mb-2">Add Note</h2>
+      <select id="categoryInput" class="w-full p-2 text-black rounded mb-2">
+        <option value="Note">Note</option>
+        <option value="Todo">Todo</option>
+        <option value="Follow up">Follow up</option>
+        <option value="Reminder">Reminder</option>
+        <option value="Idea">Idea</option>
+      </select>
+      <input id="tagsInput" class="w-full p-2 text-black rounded mb-2" placeholder="Enter tags, comma-separated" list="tagSuggestions"/>
+      <datalist id="tagSuggestions"></datalist>
+
       <textarea id="noteInput" class="w-full h-24 p-2 text-black rounded mb-2"></textarea>
       <button onclick="addNote()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded mb-4">Add Note</button>
 
       <input type="text" id="searchInput" placeholder="Search notes..." class="w-full p-2 text-black rounded mb-2" oninput="searchNotes()">
 
       <a href="/export/excel" class="inline-block mb-2 bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded font-semibold text-sm">📥 Export to Excel</a>
-
-      <div id="notesContainer" class="space-y-2"></div>
 
       <div class="flex justify-between items-center mb-2" style="position: relative; z-index: 1;">
         <label class="text-sm">Per Page:
@@ -68,6 +71,8 @@
           <button id="nextNotesBtn" onclick="nextNotesPage()" class="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded">➡</button>
         </div>
       </div>
+
+      <div id="notesContainer" class="space-y-2"></div>
     </div>
   </div>
 
@@ -116,15 +121,27 @@
       fetchNotes();
     }
 
+    function fetchTags() {
+      fetch('/tags')
+        .then(res => res.json())
+        .then(tags => {
+          const list = document.getElementById('tagSuggestions');
+          list.innerHTML = tags.map(tag => `<option value="${tag}">`).join('');
+        });
+    }
+
     function addNote() {
       const noteText = document.getElementById('noteInput').value.trim();
+      const category = document.getElementById('categoryInput').value;
+      const tags = document.getElementById('tagsInput').value.trim();
       if (!noteText) return;
       fetch('/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: noteText })
+        body: JSON.stringify({ text: noteText, category, tags })
       }).then(() => {
         document.getElementById('noteInput').value = '';
+        document.getElementById('tagsInput').value = '';
         fetchNotes();
       });
     }
@@ -146,6 +163,8 @@
         noteEl.className = 'p-3 rounded post-it';
         noteEl.innerHTML = `
           <div class="text-sm text-black wrap-text">${note.text}</div>
+          <div class="text-xs text-black italic">Category: ${note.category || 'Note'}</div>
+          <div class="text-xs text-black italic mb-2">Tags: ${note.tags || ''}</div>
           <div class="mt-2 flex space-x-2">
             <button class="text-xs bg-blue-400 px-2 py-1 rounded edit-btn" data-id="${note.id}" data-text="${encodeURIComponent(note.text)}">Edit</button>
             <button onclick="deleteNote(${note.id})" class="text-xs bg-red-400 px-2 py-1 rounded">Delete</button>
@@ -206,6 +225,7 @@
       fetchNotes();
     }
 
+    fetchTags();
     fetchNotes();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
