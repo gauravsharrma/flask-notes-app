@@ -20,16 +20,16 @@
       border-collapse: collapse;
     }
     .prose thead {
-      background-color: #1f2937; /* Tailwind gray-800 */
+      background-color: #1f2937;
       color: #fff;
     }
     .prose th, .prose td {
-      border: 1px solid #4b5563; /* Tailwind gray-600 */
+      border: 1px solid #4b5563;
       padding: 0.5rem;
       text-align: left;
     }
     .prose tr:nth-child(even) {
-      background-color: #374151; /* Tailwind gray-700 */
+      background-color: #374151;
     }
   </style>
 </head>
@@ -47,17 +47,10 @@
       <h2 class="text-lg font-semibold mb-2">Converted HTML</h2>
       <div class="flex justify-between items-center mb-2">
         <button id="prevSlideBtn" onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
-        
         <div class="flex items-center space-x-4">
           <div class="text-sm">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></div>
           <button onclick="copyMarkdown()" class="bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-semibold px-3 py-1 rounded">📋 Copy Markdown</button>
         </div>
-      
-        <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
-      </div>
-
-        <button id="prevSlideBtn" onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
-        <div class="text-sm">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></div>
         <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
       </div>
       <div id="markdownOutput" class="prose dark:prose-invert bg-gray-800 p-4 rounded mx-auto" style="max-width: 70ch;"></div>
@@ -112,9 +105,7 @@
 
     function convertMarkdown() {
       const raw = document.getElementById('markdownInput').value;
-      
-      slides = raw.split(/\n---\n/).map(s => s.trim()).filter(s => s);
-
+      slides = raw.split(/^---$/m).map(s => s.trim()).filter(s => s);
       currentSlide = 0;
       renderSlide();
     }
@@ -127,7 +118,7 @@
       document.getElementById('prevSlideBtn').disabled = currentSlide === 0;
       document.getElementById('nextSlideBtn').disabled = currentSlide === slides.length - 1;
     }
-    
+
     function copyMarkdown() {
       if (slides[currentSlide]) {
         navigator.clipboard.writeText(slides[currentSlide]).then(() => {
@@ -270,7 +261,6 @@
       fetchNotes();
     }
 
-    // Handle pasted images into note textarea
     document.getElementById('noteInput').addEventListener('paste', function (event) {
       const items = event.clipboardData.items;
       for (let item of items) {
