@@ -15,6 +15,22 @@
       white-space: pre-wrap;
       word-wrap: break-word;
     }
+    .prose table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .prose thead {
+      background-color: #1f2937; /* Tailwind gray-800 */
+      color: #fff;
+    }
+    .prose th, .prose td {
+      border: 1px solid #4b5563; /* Tailwind gray-600 */
+      padding: 0.5rem;
+      text-align: left;
+    }
+    .prose tr:nth-child(even) {
+      background-color: #374151; /* Tailwind gray-700 */
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200 min-h-screen p-4">
