@@ -76,9 +76,14 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     let currentSlide = 0;
     let slides = [];
+    let currentPage = 0;
+    let perPage = 2;
+    let currentSearch = '';
+    let totalNotes = 0;
 
     function convertMarkdown() {
       const raw = document.getElementById('markdownInput').value;
@@ -110,59 +115,31 @@
       }
     }
 
-    let currentPage = 0;
-    let perPage = 2;
-    let currentSearch = '';
-    let totalNotes = 0;
-
-    function updateNotesPerPage() {
-      perPage = parseInt(document.getElementById('notesPerPage').value);
-      currentPage = 0;
-      fetchNotes();
+    function fetchTags() {
+      fetch('/tags')
+        .then(res => {
+          if (!res.ok) throw new Error('Server error while fetching tags');
+          return res.json();
+        })
+        .then(tags => {
+          const list = document.getElementById('tagSuggestions');
+          list.innerHTML = tags.map(tag => `<option value="${tag}">`).join('');
+        })
+        .catch(err => console.error('Fetch tags failed:', err));
     }
 
-    function addNote() {
-      const noteText = document.getElementById('noteInput').value.trim();
-      const category = document.getElementById('categoryInput').value;
-      const tags = document.getElementById('tagsInput').value.trim();
-      if (!noteText) return;
-      fetch('/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: noteText, category, tags })
-      }).then(() => {
-        document.getElementById('noteInput').value = '';
-        document.getElementById('tagsInput').value = '';
-        fetchNotes();
-      });
+    function fetchNotes() {
+      fetch(`/notes?search=${currentSearch}&page=${currentPage}&per_page=${perPage}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Server error while fetching notes');
+          return res.json();
+        })
+        .then(data => {
+          totalNotes = data.total;
+          renderNotes(data.notes);
+        })
+        .catch(err => console.error('Fetch notes failed:', err));
     }
-
-function fetchNotes() {
-  fetch(`/notes?search=${currentSearch}&page=${currentPage}&per_page=${perPage}`)
-    .then(res => {
-      if (!res.ok) throw new Error('Server error while fetching notes');
-      return res.json();
-    })
-    .then(data => {
-      totalNotes = data.total;
-      renderNotes(data.notes);
-    })
-    .catch(err => console.error('Fetch notes failed:', err));
-}
-
-function fetchTags() {
-  fetch('/tags')
-    .then(res => {
-      if (!res.ok) throw new Error('Server error while fetching tags');
-      return res.json();
-    })
-    .then(tags => {
-      const list = document.getElementById('tagSuggestions');
-      list.innerHTML = tags.map(tag => `<option value="${tag}">`).join('');
-    })
-    .catch(err => console.error('Fetch tags failed:', err));
-}
-
 
     function renderNotes(notes) {
       const container = document.getElementById('notesContainer');
@@ -196,6 +173,22 @@ function fetchTags() {
       document.getElementById('nextNotesBtn').disabled = currentPage >= lastPage;
     }
 
+    function addNote() {
+      const noteText = document.getElementById('noteInput').value.trim();
+      const category = document.getElementById('categoryInput').value;
+      const tags = document.getElementById('tagsInput').value.trim();
+      if (!noteText) return;
+      fetch('/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: noteText, category, tags })
+      }).then(() => {
+        document.getElementById('noteInput').value = '';
+        document.getElementById('tagsInput').value = '';
+        fetchNotes();
+      });
+    }
+
     function editNote(id, oldText) {
       const newText = prompt('Edit note:', oldText);
       if (newText !== null) {
@@ -211,6 +204,12 @@ function fetchTags() {
       if (confirm('Delete this note?')) {
         fetch(`/notes/${id}`, { method: 'DELETE' }).then(fetchNotes);
       }
+    }
+
+    function updateNotesPerPage() {
+      perPage = parseInt(document.getElementById('notesPerPage').value);
+      currentPage = 0;
+      fetchNotes();
     }
 
     function prevNotesPage() {
@@ -237,6 +236,5 @@ function fetchTags() {
     fetchTags();
     fetchNotes();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>
