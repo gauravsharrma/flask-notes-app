@@ -121,15 +121,6 @@
       fetchNotes();
     }
 
-    function fetchTags() {
-      fetch('/tags')
-        .then(res => res.json())
-        .then(tags => {
-          const list = document.getElementById('tagSuggestions');
-          list.innerHTML = tags.map(tag => `<option value="${tag}">`).join('');
-        });
-    }
-
     function addNote() {
       const noteText = document.getElementById('noteInput').value.trim();
       const category = document.getElementById('categoryInput').value;
@@ -146,14 +137,32 @@
       });
     }
 
-    function fetchNotes() {
-      fetch(`/notes?search=${currentSearch}&page=${currentPage}&per_page=${perPage}`)
-        .then(res => res.json())
-        .then(data => {
-          totalNotes = data.total;
-          renderNotes(data.notes);
-        });
-    }
+function fetchNotes() {
+  fetch(`/notes?search=${currentSearch}&page=${currentPage}&per_page=${perPage}`)
+    .then(res => {
+      if (!res.ok) throw new Error('Server error while fetching notes');
+      return res.json();
+    })
+    .then(data => {
+      totalNotes = data.total;
+      renderNotes(data.notes);
+    })
+    .catch(err => console.error('Fetch notes failed:', err));
+}
+
+function fetchTags() {
+  fetch('/tags')
+    .then(res => {
+      if (!res.ok) throw new Error('Server error while fetching tags');
+      return res.json();
+    })
+    .then(tags => {
+      const list = document.getElementById('tagSuggestions');
+      list.innerHTML = tags.map(tag => `<option value="${tag}">`).join('');
+    })
+    .catch(err => console.error('Fetch tags failed:', err));
+}
+
 
     function renderNotes(notes) {
       const container = document.getElementById('notesContainer');
