@@ -123,6 +123,7 @@ def run_manual_db_patch():
             conn.execute(db.text("ALTER TABLE note ADD COLUMN IF NOT EXISTS tags VARCHAR(255);"))
         app.db_patch_done = True
 
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     with app.app_context():
