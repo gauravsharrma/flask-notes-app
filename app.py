@@ -115,7 +115,18 @@ def get_tags():
     unique_tags = sorted(set(all_tags))
     return jsonify(unique_tags)
 
-if __name__ == '__main__':
+@app.before_first_request
+"
+        "def run_manual_db_patch():
+"
+        "    with db.engine.connect() as conn:
+"
+        "        conn.execute(db.text("ALTER TABLE note ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'Note';"))
+"
+        "        conn.execute(db.text("ALTER TABLE note ADD COLUMN IF NOT EXISTS tags VARCHAR(255);"))
+
+"
+        "if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     with app.app_context():
         db.create_all()
