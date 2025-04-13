@@ -1,27 +1,27 @@
 from flask import Flask, request, jsonify, render_template
- from flask import Flask, request, jsonify, render_template, send_file
- from flask_sqlalchemy import SQLAlchemy
- from flask_cors import CORS
- import os
- import pandas as pd 
- import io
- 
- app = Flask(__name__)
- CORS(app)
- 
- # Database setup
- DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///notes.db')
- app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
- app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
- 
- db = SQLAlchemy(app)
- 
- # Models
- class Note(db.Model):
-     id = db.Column(db.Integer, primary_key=True)
-     text = db.Column(db.Text, nullable=False)
- 
- # Routes
+from flask import Flask, request, jsonify, render_template, send_file
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+import os
+import pandas as pd 
+import io
+
+app = Flask(__name__)
+CORS(app)
+
+# Database setup
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///notes.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+# Models
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+
+# Routes
  @app.route('/')
  def index():
      return render_template('index.html')
