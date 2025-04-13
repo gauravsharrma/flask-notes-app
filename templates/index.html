@@ -102,7 +102,9 @@
 
     function convertMarkdown() {
       const raw = document.getElementById('markdownInput').value;
-      slides = raw.split('---').map(s => s.trim()).filter(s => s && !/^[\-\s]*$/.test(s));
+      
+      slides = raw.split(/\n---\n/).map(s => s.trim()).filter(s => s);
+
       currentSlide = 0;
       renderSlide();
     }
