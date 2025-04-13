@@ -45,7 +45,17 @@
     <!-- Converted HTML -->
     <div class="col-span-12 lg:col-span-6">
       <h2 class="text-lg font-semibold mb-2">Converted HTML</h2>
-      <div class="flex justify-between mb-2">
+      <div class="flex justify-between items-center mb-2">
+        <button id="prevSlideBtn" onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
+        
+        <div class="flex items-center space-x-4">
+          <div class="text-sm">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></div>
+          <button onclick="copyMarkdown()" class="bg-yellow-500 hover:bg-yellow-600 text-black text-xs font-semibold px-3 py-1 rounded">📋 Copy Markdown</button>
+        </div>
+      
+        <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
+      </div>
+
         <button id="prevSlideBtn" onclick="prevSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">⬅ Prev</button>
         <div class="text-sm">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></div>
         <button id="nextSlideBtn" onclick="nextSlide()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">Next ➡</button>
@@ -116,6 +126,16 @@
       document.getElementById('slideTotal').innerText = slides.length;
       document.getElementById('prevSlideBtn').disabled = currentSlide === 0;
       document.getElementById('nextSlideBtn').disabled = currentSlide === slides.length - 1;
+    }
+    
+    function copyMarkdown() {
+      if (slides[currentSlide]) {
+        navigator.clipboard.writeText(slides[currentSlide]).then(() => {
+          alert("Markdown copied!");
+        }).catch(err => {
+          console.error("Clipboard copy failed:", err);
+        });
+      }
     }
 
     function prevSlide() {
