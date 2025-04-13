@@ -19,6 +19,8 @@ db = SQLAlchemy(app)
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50), nullable=False, default='Note')
+    tags = db.Column(db.String(255), nullable=True)
 
 # Routes
 @app.route('/')
@@ -39,25 +41,31 @@ def get_notes():
     notes = query.offset(page * per_page).limit(per_page).all()
 
     return jsonify({
-        "notes": [{"id": n.id, "text": n.text} for n in notes],
+        "notes": [{"id": n.id, "text": n.text, "category": n.category, "tags": n.tags} for n in notes],
         "total": total
     })
 
 @app.route('/notes', methods=['POST'])
 def add_note():
     data = request.get_json()
-    note = Note(text=data['text'])
+    note = Note(
+        text=data['text'],
+        category=data.get('category', 'Note'),
+        tags=data.get('tags', '')
+    )
     db.session.add(note)
     db.session.commit()
-    return jsonify({"id": note.id, "text": note.text}), 201
+    return jsonify({"id": note.id, "text": note.text, "category": note.category, "tags": note.tags}), 201
 
 @app.route('/notes/<int:note_id>', methods=['PUT'])
 def edit_note(note_id):
     data = request.get_json()
     note = Note.query.get_or_404(note_id)
     note.text = data['text']
+    note.category = data.get('category', note.category)
+    note.tags = data.get('tags', note.tags)
     db.session.commit()
-    return jsonify({"id": note.id, "text": note.text})
+    return jsonify({"id": note.id, "text": note.text, "category": note.category, "tags": note.tags})
 
 @app.route('/notes/<int:note_id>', methods=['DELETE'])
 def delete_note(note_id):
@@ -69,7 +77,7 @@ def delete_note(note_id):
 @app.route('/export/excel')
 def export_excel():
     notes = Note.query.all()
-    data = [{"ID": n.id, "Note": n.text} for n in notes]
+    data = [{"ID": n.id, "Note": n.text, "Category": n.category, "Tags": n.tags} for n in notes]
 
     df = pd.DataFrame(data)
     output = io.BytesIO()
@@ -83,6 +91,15 @@ def export_excel():
         as_attachment=True,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+@app.route('/tags', methods=['GET'])
+def get_tags():
+    all_tags = []
+    for note in Note.query.with_entities(Note.tags).all():
+        if note.tags:
+            all_tags.extend(tag.strip() for tag in note.tags.split(',') if tag.strip())
+    unique_tags = sorted(set(all_tags))
+    return jsonify(unique_tags)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
